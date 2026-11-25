@@ -5,7 +5,7 @@ Affiliate redirect tracking and campaign routing platform.
 ## Stack
 
 - Next.js (App Router) + TypeScript + Tailwind
-- Prisma + SQLite
+- Prisma + PostgreSQL (Neon)
 - Auth.js (credentials)
 
 ## Quick start
