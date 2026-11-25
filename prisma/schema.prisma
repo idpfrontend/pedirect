@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime       @default(now())
+  notifications Notification[]
+}
+
+model Offer {
+  id          String          @id @default(cuid())
+  name        String
+  network     String
+  trackingUrl String
+  geos        String          @default("[]") // JSON array of country codes
+  status      String          @default("ACTIVE") // ACTIVE | PAUSED
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  campaigns   CampaignOffer[]
+  clicks      ClickLog[]
+}
+
+model Campaign {
+  id                   String          @id @default(cuid())
+  name                 String
+  destinationUrl       String
+  mappingKey           String          @unique
+  clickRateMultiplier  Int             @default(1)
+  maxClicks            Int             @default(0) // 0 = unlimited
+  googleAdsMccId       String          @default("")
+  customerAccountId    String          @default("")
+  geos                 String          @default("[]") // JSON array
+  referrers            String          @default("[]") // JSON array of allowed referrer hosts/urls
+  status               String          @default("ACTIVE") // ACTIVE | PAUSED
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  offers               CampaignOffer[]
+  clicks               ClickLog[]
+}
+
+model CampaignOffer {
+  id         String   @id @default(cuid())
+  campaignId String
+  offerId    String
+  weight     Int      @default(1)
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  offer      Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, offerId])
+}
+
+model ClickLog {
+  id           String    @id @default(cuid())
+  clickId      String    @unique
+  campaignId   String
+  offerId      String?
+  destination  String
+  ip           String    @default("")
+  userAgent    String    @default("")
+  device       String    @default("unknown") // desktop | mobile | tablet | unknown
+  geo          String    @default("")
+  referrer     String    @default("")
+  mainClicks   Int       @default(1)
+  googleClicks Int       @default(0)
+  createdAt    DateTime  @default(now())
+  campaign     Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  offer        Offer?    @relation(fields: [offerId], references: [id], onDelete: SetNull)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
